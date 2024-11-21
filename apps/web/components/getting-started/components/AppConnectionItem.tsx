@@ -1,4 +1,5 @@
 import Link from "next/link";
+import React, { useState } from "react";
 
 import type { TDependencyData } from "@calcom/app-store/_appRegistry";
 import { InstallAppButtonWithoutPlanCheck } from "@calcom/app-store/components";
@@ -25,6 +26,10 @@ const AppConnectionItem = (props: IAppConnectionItem) => {
   const { t } = useLocale();
   const setDefaultConferencingApp = trpc.viewer.appsRouter.setDefaultConferencingApp.useMutation();
   const dependency = props.dependencyData?.find((data) => !data.installed);
+
+  // State to manage the temporary loader
+  const [tempLoader, setTempLoader] = useState(false);
+
   return (
     <div className="flex flex-row items-center justify-between p-5">
       <div className="flex items-center space-x-3">
@@ -45,9 +50,9 @@ const AppConnectionItem = (props: IAppConnectionItem) => {
           <Button
             {...buttonProps}
             color="secondary"
-            disabled={installed || !!dependency}
+            disabled={installed || !!dependency || tempLoader}
             type="button"
-            loading={buttonProps?.isPending}
+            loading={buttonProps?.isPending || tempLoader}
             tooltip={
               dependency ? (
                 <div className="items-start space-x-2.5">
@@ -83,7 +88,11 @@ const AppConnectionItem = (props: IAppConnectionItem) => {
               ) : undefined
             }
             onClick={(event) => {
-              // Save cookie key to return url step
+              // Show temporary loader for 1 second
+              setTempLoader(true);
+              setTimeout(() => setTempLoader(false), 1000);
+
+              // Save cookie key to return URL step
               document.cookie = `return-to=${window.location.href};path=/;max-age=3600;SameSite=Lax`;
               buttonProps && buttonProps.onClick && buttonProps?.onClick(event);
             }}>
